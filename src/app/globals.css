@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --surface: #0f1419;
+    --surface-elevated: #1a2332;
+    --accent-teal: #4ecdc4;
+    --accent-coral: #ff6b6b;
+    --accent-gold: #ffd93d;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface text-gray-100 antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(78, 205, 196, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(255, 107, 107, 0.06), transparent),
+      radial-gradient(ellipse 50% 30% at 0% 50%, rgba(78, 205, 196, 0.05), transparent);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-accent-teal to-brand-500 px-6 py-4 font-semibold text-surface shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-glow active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-white/20 bg-white/5 px-6 py-4 font-semibold text-white backdrop-blur-sm transition-all duration-200 hover:border-accent-teal/50 hover:bg-white/10 active:scale-[0.98];
+  }
+
+  .card {
+    @apply rounded-2xl border border-white/10 bg-surface-elevated/80 p-6 backdrop-blur-xl;
+  }
+
+  .modal-backdrop {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in;
+  }
+
+  .modal-content {
+    @apply w-full max-w-lg rounded-2xl border border-white/10 bg-surface-elevated p-6 shadow-2xl animate-fade-in;
+  }
+}

@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Chat {
+  id            String           @id @default(uuid())
+  userId        String?          @map("user_id")
+  preview       String           @default("")
+  transcription String          @default("")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  summaries     ChatSummary[]
+  sentiments    ChatSentiment[]
+  translations  ChatTranslation[]
+
+  @@map("chats")
+}
+
+model ChatSummary {
+  id        String   @id @default(uuid())
+  chatId    String   @unique @map("chat_id")
+  summary   String
+  createdAt DateTime @default(now()) @map("created_at")
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@map("chat_summaries")
+}
+
+model ChatSentiment {
+  id        String   @id @default(uuid())
+  chatId    String   @unique @map("chat_id")
+  sentiment String
+  createdAt DateTime @default(now()) @map("created_at")
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@map("chat_sentiments")
+}
+
+model ChatTranslation {
+  id             String   @id @default(uuid())
+  chatId         String   @map("chat_id")
+  targetLang     String   @map("target_lang")
+  translatedText String   @map("translated_text")
+  createdAt      DateTime @default(now()) @map("created_at")
+  chat           Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, targetLang])
+  @@map("chat_translations")
+}

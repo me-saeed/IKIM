@@ -13,7 +13,9 @@ type View = "home" | "recording" | "results";
 export default function Page() {
   const [view, setView] = useState<View>("home");
   const [chats, setChats] = useState<Chat[]>([]);
+  const [loadingChats, setLoadingChats] = useState(true);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [deletingChatId, setDeletingChatId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,9 +23,11 @@ export default function Page() {
   const transcription = currentChat?.transcription ?? "";
 
   useEffect(() => {
+    setLoadingChats(true);
     getChats()
       .then(setChats)
-      .catch(() => setChats([]));
+      .catch(() => setChats([]))
+      .finally(() => setLoadingChats(false));
   }, []);
 
   const handleStartRecording = () => {
@@ -105,6 +109,7 @@ export default function Page() {
 
   const handleDeleteChat = useCallback(async (chatId: string) => {
     setError(null);
+    setDeletingChatId(chatId);
     try {
       await deleteChat(chatId);
       setChats((prev) => prev.filter((c) => c.id !== chatId));
@@ -114,6 +119,8 @@ export default function Page() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete chat.");
+    } finally {
+      setDeletingChatId(null);
     }
   }, [currentChatId]);
 
@@ -121,6 +128,8 @@ export default function Page() {
     <div className="flex min-h-screen">
       <ChatSidebar
         chats={chats}
+        loadingChats={loadingChats}
+        deletingChatId={deletingChatId}
         currentChatId={currentChatId}
         onNewChat={handleNewChat}
         onSelectChat={handleSelectChat}

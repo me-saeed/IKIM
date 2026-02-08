@@ -7,6 +7,9 @@ const routes = require("./routes");
 const config = require("./config/env");
 const app = express();
 
+// When behind a reverse proxy (nginx, Caddy, etc.), trust X-Forwarded-For so rate limiting uses real client IP
+app.set("trust proxy", 1);
+
 app.use(cors());
 app.use(express.json());
 

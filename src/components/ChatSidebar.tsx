@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, Plus, Menu, X, Trash2 } from "lucide-react";
+import { MessageSquare, Plus, Menu, X, Trash2, Loader2 } from "lucide-react";
 import type { Chat } from "@/types/chat";
 
 interface ChatSidebarProps {
   chats: Chat[];
+  loadingChats?: boolean;
+  deletingChatId?: string | null;
   currentChatId: string | null;
   onNewChat: () => void;
   onSelectChat: (chatId: string) => void;
@@ -25,6 +27,8 @@ function formatDate(ts: number): string {
 
 export default function ChatSidebar({
   chats,
+  loadingChats = false,
+  deletingChatId = null,
   currentChatId,
   onNewChat,
   onSelectChat,
@@ -69,45 +73,75 @@ export default function ChatSidebar({
 
       {/* Chat list */}
       <div className="flex-1 overflow-y-auto px-2 pb-4">
-        {sortedChats.length === 0 ? (
+        {loadingChats ? (
+          <ul className="space-y-0.5" aria-busy="true" aria-label="Loading chats">
+            {[1, 2, 3, 4].map((i) => (
+              <li key={i} className="flex items-stretch gap-0.5 rounded-lg">
+                <div className="min-w-0 flex-1 rounded-l-lg px-3 py-2.5">
+                  <div className="h-4 w-24 rounded bg-white/10 animate-pulse" />
+                  <div className="mt-2 h-3 w-16 rounded bg-white/5 animate-pulse" />
+                </div>
+                <div className="rounded-r-lg p-2">
+                  <div className="h-4 w-4 rounded bg-white/5 animate-pulse" />
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : sortedChats.length === 0 ? (
           <p className="px-2 py-4 text-center text-xs text-gray-500">
             No chats yet. Start a new recording or upload.
           </p>
         ) : (
           <ul className="space-y-0.5">
-            {sortedChats.map((chat) => (
-              <li key={chat.id} className="group flex items-stretch gap-0.5 rounded-lg hover:bg-white/5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSelectChat(chat.id);
-                    setMobileOpen(false);
-                  }}
-                  className={`min-w-0 flex-1 rounded-l-lg px-3 py-2.5 text-left text-sm transition hover:bg-white/10 ${
-                    currentChatId === chat.id
-                      ? "bg-accent-teal/15 text-accent-teal"
-                      : "text-gray-300"
-                  }`}
+            {sortedChats.map((chat) => {
+              const isDeleting = deletingChatId === chat.id;
+              return (
+                <li
+                  key={chat.id}
+                  className={`group flex items-stretch gap-0.5 rounded-lg hover:bg-white/5 ${isDeleting ? "opacity-70" : ""}`}
                 >
-                  <p className="line-clamp-2">{chat.preview}</p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    {formatDate(chat.createdAt)}
-                  </p>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteChat(chat.id);
-                    setMobileOpen(false);
-                  }}
-                  className="rounded-r-lg p-2 text-gray-500 transition hover:bg-rose-500/20 hover:text-rose-400"
-                  aria-label="Delete chat"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </li>
-            ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isDeleting) {
+                        onSelectChat(chat.id);
+                        setMobileOpen(false);
+                      }
+                    }}
+                    disabled={isDeleting}
+                    className={`min-w-0 flex-1 rounded-l-lg px-3 py-2.5 text-left text-sm transition hover:bg-white/10 disabled:cursor-not-allowed ${
+                      currentChatId === chat.id
+                        ? "bg-accent-teal/15 text-accent-teal"
+                        : "text-gray-300"
+                    }`}
+                  >
+                    <p className="line-clamp-2">{chat.preview}</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {formatDate(chat.createdAt)}
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isDeleting) {
+                        onDeleteChat(chat.id);
+                        setMobileOpen(false);
+                      }
+                    }}
+                    disabled={isDeleting}
+                    className="rounded-r-lg p-2 text-gray-500 transition hover:bg-rose-500/20 hover:text-rose-400 disabled:cursor-not-allowed disabled:opacity-70"
+                    aria-label={isDeleting ? "Deleting…" : "Delete chat"}
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

@@ -1,11 +1,11 @@
-# Deploying IKIM Voice (Netlify + Render)
+# Deploying IKIM Voice (Netlify + backend)
 
 Netlify **does not run long-running servers** (like your Express app). So:
 
 - **Frontend (Next.js)** → **Netlify**
-- **Backend (Express)** → **Render** (free tier, runs Node 24/7)
+- **Backend (Express)** → Your VPS at **https://stranger.encodersoft.dev** (or Render/Railway if you prefer)
 
-After both are deployed, set the frontend env var `NEXT_PUBLIC_API_URL` to your Render API URL.
+On Netlify, set **`NEXT_PUBLIC_API_URL`** = `https://stranger.encodersoft.dev` (no trailing slash) so the frontend talks to your backend.
 
 ---
 
@@ -83,8 +83,8 @@ app.use(cors({ origin: ["https://your-app.netlify.app", "http://localhost:3000"]
 In **Site settings** → **Environment variables** → **Add variable**:
 
 - **Key:** `NEXT_PUBLIC_API_URL`
-- **Value:** `https://ikim-voice-api.onrender.com`  
-  (your Render Web Service URL, **no** trailing slash).
+- **Value:** `https://stranger.encodersoft.dev`  
+  (your backend API URL – no trailing slash; backend is hosted on your VPS at that domain).
 
 Save. Redeploy so the build sees this variable.
 
@@ -116,9 +116,9 @@ For Next.js 14, Netlify often uses an internal publish path; if the default work
 | What        | Where   | URL / Env |
 |------------|---------|-----------|
 | Next.js FE | Netlify | `https://<your-site>.netlify.app` |
-| Express BE | Render  | `https://<your-service>.onrender.com` |
-| FE env    | Netlify | `NEXT_PUBLIC_API_URL` = Render URL |
-| BE env    | Render  | `PORT`, `OPENAI_API_KEY`, `DATABASE_URL`, `DIRECT_URL` |
+| Express BE | Your VPS | `https://stranger.encodersoft.dev` |
+| FE env    | Netlify | `NEXT_PUBLIC_API_URL` = `https://stranger.encodersoft.dev` |
+| BE env    | VPS     | `PORT`, `OPENAI_API_KEY`, `DATABASE_URL`, `DIRECT_URL` |
 
 ---
 

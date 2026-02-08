@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Square } from "lucide-react";
+import { Square, Loader2 } from "lucide-react";
 
 interface RecordingScreenProps {
   onStop: (audioBlob: Blob) => void;
@@ -9,7 +9,7 @@ interface RecordingScreenProps {
 
 export default function RecordingScreen({ onStop }: RecordingScreenProps) {
   const [seconds, setSeconds] = useState(0);
-  const [status, setStatus] = useState<"requesting" | "recording" | "error">("requesting");
+  const [status, setStatus] = useState<"requesting" | "recording" | "stopping" | "error">("requesting");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -62,6 +62,7 @@ export default function RecordingScreen({ onStop }: RecordingScreenProps) {
     const mr = mediaRecorderRef.current;
     const stream = streamRef.current;
     if (mr?.state === "recording") {
+      setStatus("stopping"); // stops timer, disables button, shows processing UI
       mr.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
         stream?.getTracks().forEach((t) => t.stop());
@@ -69,7 +70,7 @@ export default function RecordingScreen({ onStop }: RecordingScreenProps) {
       };
       mr.stop();
     } else if (status === "error") {
-      onStop(new Blob()); // no blob; caller can handle
+      onStop(new Blob());
     }
   }, [onStop, status]);
 
@@ -97,27 +98,48 @@ export default function RecordingScreen({ onStop }: RecordingScreenProps) {
     );
   }
 
+  const isProcessing = status === "stopping";
+
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-8">
       <div className="text-center">
-        <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-accent-coral/20 px-4 py-2 text-accent-coral animate-pulse-soft">
-          <span className="h-2 w-2 rounded-full bg-accent-coral" />
-          Recording in Progress
-        </div>
-        <p className="text-3xl font-semibold text-white tabular-nums">
-          {formatTime(seconds)}
-        </p>
-        {status === "requesting" && (
-          <p className="mt-2 text-sm text-gray-400">Requesting microphone…</p>
+        {isProcessing ? (
+          <>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-gray-300">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Processing…
+            </div>
+            <p className="text-3xl font-semibold text-white tabular-nums">
+              {formatTime(seconds)}
+            </p>
+            <p className="mt-2 text-sm text-gray-400">
+              Transcribing and saving. This may take a moment…
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-accent-coral/20 px-4 py-2 text-accent-coral animate-pulse-soft">
+              <span className="h-2 w-2 rounded-full bg-accent-coral" />
+              Recording in Progress
+            </div>
+            <p className="text-3xl font-semibold text-white tabular-nums">
+              {formatTime(seconds)}
+            </p>
+            {status === "requesting" && (
+              <p className="mt-2 text-sm text-gray-400">Requesting microphone…</p>
+            )}
+          </>
         )}
       </div>
 
       <div className="card min-h-[120px]">
         <p className="text-sm font-medium uppercase tracking-wider text-gray-500">
-          Live recording
+          {isProcessing ? "Uploading & transcribing" : "Live recording"}
         </p>
         <p className="mt-3 text-gray-400">
-          Stop recording to transcribe and save. Transcription is done when you stop.
+          {isProcessing
+            ? "Your recording is being sent to the server. Please wait."
+            : "Stop recording to transcribe and save. Transcription runs when you stop."}
         </p>
       </div>
 
@@ -126,10 +148,14 @@ export default function RecordingScreen({ onStop }: RecordingScreenProps) {
           type="button"
           onClick={handleStop}
           disabled={status !== "recording"}
-          className="inline-flex items-center gap-2 rounded-2xl bg-accent-coral px-8 py-4 font-semibold text-white shadow-glow-red transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-2xl bg-accent-coral px-8 py-4 font-semibold text-white shadow-glow-red transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Square className="h-5 w-5 fill-current" />
-          Stop Recording
+          {isProcessing ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Square className="h-5 w-5 fill-current" />
+          )}
+          {isProcessing ? "Processing…" : "Stop Recording"}
         </button>
       </div>
     </div>

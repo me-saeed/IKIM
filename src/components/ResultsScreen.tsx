@@ -55,22 +55,36 @@ export default function ResultsScreen({
   useEffect(() => {
     if (!chatId) return;
     let cancelled = false;
+    // Reset so we don't show previous chat's summary/sentiment; show loading until we have data
+    setSummaryText(null);
+    setSentimentText(null);
+    setApiError(null);
     setLoadingSummary(true);
     setLoadingSentiment(true);
     getChat(chatId)
       .then((chat) => {
         if (cancelled) return;
-        const needSummary = chat.summary == null || chat.summary === "";
-        const needSentiment = chat.sentiment == null || chat.sentiment === "";
-        if (!needSummary) setSummaryText(chat.summary ?? null);
-        if (!needSentiment) setSentimentText(chat.sentiment ?? null);
-        if (!needSummary) setLoadingSummary(false);
-        if (!needSentiment) setLoadingSentiment(false);
-        if (!needSummary && !needSentiment) return;
-        const promises: Promise<void>[] = [];
-        if (needSummary) promises.push(getSummary(chatId).then((s) => { if (!cancelled) setSummaryText(s); }).finally(() => { if (!cancelled) setLoadingSummary(false); }));
-        if (needSentiment) promises.push(getSentiment(chatId).then((s) => { if (!cancelled) setSentimentText(s); }).finally(() => { if (!cancelled) setLoadingSentiment(false); }));
-        return Promise.all(promises);
+        const hasSummary = chat.summary != null && chat.summary !== "";
+        const hasSentiment = chat.sentiment != null && chat.sentiment !== "";
+        if (hasSummary) {
+          setSummaryText(chat.summary ?? null);
+          setLoadingSummary(false);
+        }
+        if (hasSentiment) {
+          setSentimentText(chat.sentiment ?? null);
+          setLoadingSentiment(false);
+        }
+        if (hasSummary && hasSentiment) return;
+        if (!hasSummary) {
+          getSummary(chatId)
+            .then((s) => { if (!cancelled) setSummaryText(s); })
+            .finally(() => { if (!cancelled) setLoadingSummary(false); });
+        }
+        if (!hasSentiment) {
+          getSentiment(chatId)
+            .then((s) => { if (!cancelled) setSentimentText(s); })
+            .finally(() => { if (!cancelled) setLoadingSentiment(false); });
+        }
       })
       .catch((err) => {
         if (!cancelled) {
